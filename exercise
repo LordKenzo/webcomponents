@@ -1,0 +1,144 @@
+import "./character-list.js";
+import "./character-details.js";
+
+const characterListComponent = document.querySelector("lf-character-list");
+const characterDetailsComponent = document.querySelector(
+  "lf-character-details"
+);
+
+characterListComponent.addEventListener("selectCharacter", e => {
+  characterDetailsComponent.character = e.detail;
+});
+
+fetch("https://swapi.co/api/people")
+  .then(res => res.json())
+  .then(data => {
+    characterListComponent.characters = data.results;
+    characterDetailsComponent.character = data.results[0];
+  });
+class CharacterDetailsComponent extends HTMLElement {
+  get character() {
+    return this._character;
+  }
+
+  set character(value) {
+    this._character = value;
+    this._render();
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+  }
+
+  _render() {
+    this.shadowRoot.innerHTML = `
+			<style>
+			ul {
+				list-style-type:none;
+			}
+			</style>
+			<h2>${this.character.name}</h2>
+			<ul>
+				<li>Height: ${this.character.height}</li>
+				<li>Mass: ${this.character.mass}</li>
+				<li>Bith Year: ${this.character.birth_year}</li>
+			</ul>
+		`;
+  }
+}
+
+customElements.define("lf-character-details", CharacterDetailsComponent);
+const template = document.createElement("template");
+template.innerHTML = `
+	<style>
+		button {
+			display: block;
+			padding: 10px;
+			margin-bottom: 5px;
+			background-color: #33ddee;
+			border: none;
+			border-radius: 10px;
+			width: 100%;
+		}
+		button:hover {
+			background-color: #eedd33;
+		}
+		button:focus {
+			background-color: #ee4422;
+			color: #fff;
+			outline-style: none;
+		}
+	</style>
+	<section></section>
+`;
+
+class CharacterListComponent extends HTMLElement {
+  get characters() {
+    return this._characters;
+  }
+
+  set characters(value) {
+    this._characters = value;
+    this._render();
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.appendChild(template.content.cloneNode(true));
+    this.characterListElement = this.shadowRoot.querySelector("section");
+  }
+
+  _render() {
+    this._characters.forEach(character => {
+      const button = document.createElement("button");
+      button.appendChild(document.createTextNode(character.name));
+      button.addEventListener("click", () => {
+        this.dispatchEvent(
+          new CustomEvent("selectCharacter", { detail: character })
+        );
+      });
+      this.characterListElement.appendChild(button);
+    });
+  }
+}
+
+customElements.define("lf-character-list", CharacterListComponent);
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Components Communications Master-Detail</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h2>Star Wars Characters</h2>
+      <lf-character-list></lf-character-list>
+      <lf-character-details></lf-character-details>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-gap: 20px;
+  justify-content: space-between;
+}
+h2 {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+lf-character-list {
+  grid-column: 1;
+}
+lf-character-details {
+  border: 1px solid #000;
+  border-radius: 5px;
+  background-color: #fffab5;
+  grid-column: 2/4;
+  text-align: center;
+  align-self: center;
+}
+
